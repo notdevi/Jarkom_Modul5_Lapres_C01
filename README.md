@@ -84,6 +84,7 @@ Kemudian setelah didapatkan hasil perhitungan, kita dapat menghubungkan tiap-tia
 
 **SURABAYA (Sebagai Router)**
 ```
+SURABAYA
 auto lo
 iface lo inet loopback
 
@@ -92,7 +93,7 @@ iface eth0 inet static
 address 10.151.76.10
 netmask 255.255.255.252
 gateway 10.151.76.9
-		
+
 auto eth1
 iface eth1 inet static
 address 192.168.0.1
@@ -114,11 +115,11 @@ iface eth0 inet static
 address 192.168.0.2
 netmask 255.255.255.252
 gateway 192.168.0.1
-		
+
 auto eth1
 iface eth1 inet static
 address 192.168.0.9
-netmask 255.255.255.252
+netmask 255.255.255.248
 
 auto eth2
 iface eth2 inet static
@@ -136,7 +137,7 @@ iface eth0 inet static
 address 192.168.0.6
 netmask 255.255.255.252
 gateway 192.168.0.5
-		
+
 auto eth1
 iface eth1 inet static
 address 10.151.77.17
@@ -144,7 +145,7 @@ netmask 255.255.255.248
 
 auto eth2
 iface eth2 inet static
-address 192.168.3.1
+address 192.168.2.1
 netmask 255.255.255.0
 ```
 
@@ -203,9 +204,9 @@ iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-address 192.168.3.2
-netmask 255.255.255.248
-gateway 192.168.3.1
+address 192.168.2.2
+netmask 255.255.255.0
+gateway 192.168.2.1
 ```
 
 **GRESIK (Sebagai Client)**
@@ -216,7 +217,7 @@ iface lo inet loopback
 auto eth0
 iface eth0 inet static
 address 192.168.1.2
-netmask 255.255.255.248
+netmask 255.255.255.0
 gateway 192.168.1.1
 ```
 
@@ -236,10 +237,10 @@ Untuk menambahkan *route*, digunakan *command* ```route add -net <NID subnet> ne
 Dengan *setting* sebagai berikut :
 #### SURABAYA
 ```
-route add -net 192.168.0.8 netmask 255.255.255.248 gw 192.168.0.2  
-route add -net 192.168.1.0 netmask 255.255.255.0 gw 192.168.0.2  
-route add -net 192.168.3.0 netmask 255.255.255.0 gw 192.168.0.6  
-route add -net 10.151.77.16 netmask 255.255.255.248 gw 192.168.0.6 
+route add -net 192.168.1.0 netmask 255.255.255.0 gw 192.168.0.2
+route add -net 192.168.2.0 netmask 255.255.255.0 gw 192.168.0.6
+route add -net 192.168.0.8 netmask 255.255.255.248 gw 192.168.0.2
+route add -net 10.151.77.16 netmask 255.255.255.248 gw 192.168.0.6
 ```
 
 #### KEDIRI
@@ -251,3 +252,56 @@ route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.1
 ```
 route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.5	
 ```
+
+
+### Nomor 1
+```
+iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o eth0 -j SNAT --to-source 10.151.76.10
+```
+Penggunaan **SNAT** (*Source NAT*) dapat dijadikan alternatif ketimbang penggunaan **MASQUERADE**. SNAT difungsikan untuk pengambilan IP *source* yang mengarah ke TUNTAP.
+
+### Nomor 2
+```
+iptables -A FORWARD -d 10.151.77.16/29 -i eth0 -p tcp --dport 22 -j DROP
+```
+Angka 22 di sini difungsikan sebagai port SSH dan diberi fungsi **DROP**.
+
+### Nomor 3
+```
+iptables -A INPUT -p icmp -m connlimit --connlimit-above 3 -j DROP
+```
+Untuk membatasi jumlah orang yang dapat melakukan koneksi, dilakukan perintah **DROP** apabila *connlimit (connection limit)* sudah lebih dari 3.
+
+### Nomor 4
+```
+iptables -A INPUT -s 192.168.2.0/24 -m time --timestart 07:00 --timestop 17:00 --days Mon,Tue,Wed,Thu,Fri -j ACCEPT
+
+iptables -A INPUT -s 192.168.2.0/24 -j REJECT
+```
+Untuk line yang pertama, menunjukkan hari untuk menerima koneksi yaitu hari Senin hingga Jumat pukul 7 hingga pukul 5 sore.
+
+Sementara line yang kedua menunjukkan bahwa selain hari yang tertera di line pertama, akan di-*reject*.
+
+### Nomor 5
+```
+iptables -A INPUT -s 192.168.1.0/24 -m time --timestart 07:00 --timestop 17:00 -j REJECT
+```
+Mirip dengan nomor 4, kita me-*reject* koneksi untuk IP tertera pada jam 7 hingga jam 5 sore, sehingga diluar jam tersebut, IP dapat diakses.
+
+### Nomor 6
+```
+iptables -t nat -A PREROUTING -p tcp -d 10.151.77.18 -m statistic --mode nth --every 2 --packet 0 -j DNAT --to-destination 192.168.1.3:80
+
+iptables -t nat -A PREROUTING -p tcp -d 10.151.77.18 -j DNAT --to-destination 192.168.1.2:80
+```
+Kedua *line* di atas difungsikan untuk mendistribusikan request client ke DNS Server pada IP Probolinggo dan Madiun. Keduanya dilakukan secara bergantian melalui ```--mode nth --every 2``` dan pada port 80 (IP:80).
+
+### Nomor 7
+```
+iptables -N LOGGING
+   iptables -A INPUT -j LOGGING
+   iptables -A OUTPUT -j LOGGING
+   iptables -A LOGGING -j LOG --log-prefix "IPTables-Dropped: " --log-level 4
+   iptables -A LOGGING -j DROP
+```
+*Line* di atas merupakan *line* yang digunakan untuk melakukan ***Logging*** atau pencatatan. Jadi, setiap **DROP** yang dilakukan oleh *firewall* dimasukkan ke dalam log.
