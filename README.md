@@ -13,7 +13,7 @@ Repository Lapres Praktikum Jarkom Modul 5
 
 Tugas pertama yaitu membuat topologi jaringan sesuai dengan rancangan yang diberikan seperti di bawah ini :
 
-![](img/topo.PNG)
+![](assets/topo.PNG)
 
 Keterangan : 
 <li> SURABAYA diberikan IP TUNTAP
@@ -54,7 +54,7 @@ xterm -T GRESIK -e linux ubd0=GRESIK,jarkom umid=GRESIK eth0=daemon,,,switch4 me
 
 **HASIL :**
 
-![](img/toposh.PNG)
+![](assets/toposh.PNG)
 
 ### Soal (B)
 
@@ -64,21 +64,21 @@ Disini kami memilih untuk menggunakan teknik **VLSM**.
 
 **Langkah 1** - Menentukan jumlah dan memberi nama *subnet* yang terdapat dalam topologi.
 
-![](img/langkah1.PNG)
+![](assets/langkah1.PNG)
 
 **Langkah 2** - Menentukan jumlah alamat IP yang dibutuhkan oleh tiap-tiap *subnet* dan melakukan *labelling netmask* berdasarkan jumlah IP yang dibutuhkan dengan mengacu pada tabel *subnet*.
 
-![](img/langkah2.PNG)
+![](assets/langkah2.PNG)
 
 Berdasarkan total IP dan netmask yang dibutuhkan, maka dapat digunakan netmask **/22** untuk memberikan pengalamatan padaa subnet.
 
 **Langkah 3** - Subnet besar yang dibentuk memiliki NID **192.168.0.0** serta netmask **/22**. Selanjutnya hitung pembagian IP berdasarkan NID dan netmask tersebut menggunakan pohon. Kemudian lakukan *subnetting* dengan pohon yang telah dibuat untuk membagi IP sesuai dengan kebutuhan masing-masing *subnet* yang ada.
 
-![](img/langkah3.PNG)
+![](assets/langkah3.png)
 
 **Langkah 4** - Dari pohon tersebut, akan didapatkan pembagian IP sebagai berikut :
 
-![](img/langkah4.PNG)
+![](assets/langkah4.PNG)
 
 Kemudian setelah didapatkan hasil perhitungan, kita dapat menghubungkan tiap-tiap *subnet* sesuai dengan hubungannya dengan *subnet-subnet* lainnya. Untuk melakukannya, kita tambahkan konfigurasi *interface* di tiap UML melalui ```etc/network/interfaces``` dengan mengambil referensi dari pengelompokkan dan perhitungan yang telah dibuat sebelumnya sebagai berikut :
 
@@ -271,9 +271,17 @@ SERVERS="10.151.77.19"
 INTERFACESv4="eth0 eth2"
 ```
 
+![](assets/d1.PNG)
+
+![](assets/d2.PNG)
+
 Servers diisi dengan IP MOJOKERTO yang merupakan DHCP Server, dan interfaces disesuaikan dengan topologi. Setelah itu, dilakukan konfigurasi DHCP Server pada MOJOKERTO sebagai berikut :
 
-Untuk mengatur interface, buka file dengan menggunakan command ```nano /etc/default/isc-dhcp-server``` kemudian tambahkan ```INTERFACES="eth0"```. Kemudian pada file ```nano /etc/dhcp/dhcpd.conf```, ditambahkan konfigurasi sebagai berikut :
+Untuk mengatur interface, buka file dengan menggunakan command ```nano /etc/default/isc-dhcp-server``` kemudian tambahkan ```INTERFACES="eth0"```. 
+
+![](assets/d3.PNG)
+
+Kemudian pada file ```nano /etc/dhcp/dhcpd.conf```, ditambahkan konfigurasi sebagai berikut :
 
 ```
 subnet 10.151.77.16 netmask 255.255.255.248 {
@@ -301,6 +309,8 @@ subnet 192.168.2.0 netmask 255.255.255.0 {
     max-lease-time 7200;
 }
 ```
+
+![](assets/d4.PNG)
 
 ### Nomor 1
 ```
