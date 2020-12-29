@@ -13,7 +13,7 @@ Repository Lapres Praktikum Jarkom Modul 5
 
 Tugas pertama yaitu membuat topologi jaringan sesuai dengan rancangan yang diberikan seperti di bawah ini :
 
-![](img/)
+![](img/topo.PNG)
 
 Keterangan : 
 <li> SURABAYA diberikan IP TUNTAP
@@ -54,7 +54,7 @@ xterm -T GRESIK -e linux ubd0=GRESIK,jarkom umid=GRESIK eth0=daemon,,,switch4 me
 
 **HASIL :**
 
-![](img/)
+![](img/toposh.PNG)
 
 ### Soal (B)
 
@@ -64,21 +64,21 @@ Disini kami memilih untuk menggunakan teknik **VLSM**.
 
 **Langkah 1** - Menentukan jumlah dan memberi nama *subnet* yang terdapat dalam topologi.
 
-![](img/)
+![](img/langkah1.PNG)
 
 **Langkah 2** - Menentukan jumlah alamat IP yang dibutuhkan oleh tiap-tiap *subnet* dan melakukan *labelling netmask* berdasarkan jumlah IP yang dibutuhkan dengan mengacu pada tabel *subnet*.
 
-![](img/)
+![](img/langkah2.PNG)
 
 Berdasarkan total IP dan netmask yang dibutuhkan, maka dapat digunakan netmask **/22** untuk memberikan pengalamatan padaa subnet.
 
 **Langkah 3** - Subnet besar yang dibentuk memiliki NID **192.168.0.0** serta netmask **/22**. Selanjutnya hitung pembagian IP berdasarkan NID dan netmask tersebut menggunakan pohon. Kemudian lakukan *subnetting* dengan pohon yang telah dibuat untuk membagi IP sesuai dengan kebutuhan masing-masing *subnet* yang ada.
 
-![](img/)
+![](img/langkah3.PNG)
 
 **Langkah 4** - Dari pohon tersebut, akan didapatkan pembagian IP sebagai berikut :
 
-![](img/)
+![](img/langkah4.PNG)
 
 Kemudian setelah didapatkan hasil perhitungan, kita dapat menghubungkan tiap-tiap *subnet* sesuai dengan hubungannya dengan *subnet-subnet* lainnya. Untuk melakukannya, kita tambahkan konfigurasi *interface* di tiap UML melalui ```etc/network/interfaces``` dengan mengambil referensi dari pengelompokkan dan perhitungan yang telah dibuat sebelumnya sebagai berikut :
 
@@ -221,10 +221,6 @@ netmask 255.255.255.0
 gateway 192.168.1.1
 ```
 
-**HASIL :**
-
-![](img/)
-
 ### Soal (C)
 
 Setelah melakukkan *subnetting*, juga diminta untuk melakukan *routing* agar setiap perangkat pada jaringan tersebut dapat terhubung.
@@ -251,6 +247,59 @@ route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.1
 #### BATU
 ```
 route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.5	
+```
+
+### Soal (D)
+
+Tugas berikutnya adalah memberikan IP pada *subnet* SIDOARJO dan GRESIK secara dinamis menggunakan bantuan DHCP Server (selain *subnet* tersebut menggunakan IP *static*). Kemudian melakukan *setting* DHCP Relay pada *router* yang menghubungkannya.
+
+Langkah pertama yang dilakukan adalah menginstall relay pada semua router dengan menggunakan perintah ```apt-get install isc-dhcp-relay```. Kemudian melakukan setting relay pada masing-masing router sebagai berikut :
+
+**SURABAYA : **
+```
+SERVERS="10.151.77.19" 
+INTERFACESv4="eth1 eth2"
+```
+**BATU : **
+```
+SERVERS="10.151.77.19" 
+INTERFACESv4="eth0 eth1 eth2"
+```
+**KEDIRI : **
+```
+SERVERS="10.151.77.19" 
+INTERFACESv4="eth0 eth2"
+```
+
+Servers diisi dengan IP MOJOKERTO yang merupakan DHCP Server, dan interfaces disesuaikan dengan topologi. Setelah itu, dilakukan konfigurasi DHCP Server pada MOJOKERTO sebagai berikut :
+
+Untuk mengatur interface, buka file dengan menggunakan command ```nano /etc/default/isc-dhcp-server``` kemudian tambahkan ```INTERFACES="eth0"```. Kemudian pada file ```nano /etc/dhcp/dhcpd.conf```, ditambahkan konfigurasi sebagai berikut :
+
+```
+subnet 10.151.77.16 netmask 255.255.255.248 {
+    option routers 10.151.77.17;
+    option broadcast-address 10.151.77.23;
+}
+
+subnet 192.168.1.0 netmask 255.255.255.0 {
+    range 192.168.1.2 192.168.1.213;
+    option routers 192.168.1.1;
+    option broadcast-address 192.168.1.255;
+    option domain-name-servers 10.151.77.18;		
+    option domain-name-servers 202.46.129.2;		
+    default-lease-time 600;
+    max-lease-time 7200;
+}
+
+subnet 192.168.2.0 netmask 255.255.255.0 {
+    range 192.168.2.2 192.168.2.203;
+    option routers 192.168.2.1;
+    option broadcast-address 192.168.2.255;
+    option domain-name-servers 10.151.77.18;
+    option domain-name-servers 202.46.129.2;
+    default-lease-time 600;
+    max-lease-time 7200;
+}
 ```
 
 ### Nomor 1
