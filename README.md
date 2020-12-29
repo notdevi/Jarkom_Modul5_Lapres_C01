@@ -255,17 +255,17 @@ Tugas berikutnya adalah memberikan IP pada *subnet* SIDOARJO dan GRESIK secara d
 
 Langkah pertama yang dilakukan adalah menginstall relay pada semua router dengan menggunakan perintah ```apt-get install isc-dhcp-relay```. Kemudian melakukan setting relay pada masing-masing router sebagai berikut :
 
-**SURABAYA : **
+**SURABAYA :**
 ```
 SERVERS="10.151.77.19" 
 INTERFACESv4="eth1 eth2"
 ```
-**BATU : **
+**BATU :**
 ```
 SERVERS="10.151.77.19" 
 INTERFACESv4="eth0 eth1 eth2"
 ```
-**KEDIRI : **
+**KEDIRI :**
 ```
 SERVERS="10.151.77.19" 
 INTERFACESv4="eth0 eth2"
